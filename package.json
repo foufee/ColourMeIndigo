@@ -1,0 +1,40 @@
+{
+  "name": "ColorMeIndigo",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node node_modules/react-native/local-cli/cli.js start",
+    "test": "jest",
+    "postinstall": "rndebugger-open"
+  },
+  "dependencies": {
+    "immutable": "^3.8.2",
+    "native-base": "^2.4.5",
+    "react": "16.3.1",
+    "react-lifecycle-component": "^3.0.0",
+    "react-logger": "^1.1.0",
+    "react-native": "0.55.4",
+    "react-native-ble-manager": "^6.3.1",
+    "react-native-devsettings-android": "^0.1.5",
+    "react-native-vector-icons": "^4.6.0",
+    "react-navigation": "^2.0.1",
+    "react-redux": "^5.0.7",
+    "react-spring": "^5.3.5",
+    "redux": "^4.0.0",
+    "redux-immutable": "^4.0.0",
+    "redux-logger": "^3.0.6",
+    "redux-thunk": "^2.2.0"
+  },
+  "devDependencies": {
+    "babel-jest": "22.4.4",
+    "babel-preset-react-native": "4.0.0",
+    "jest": "22.4.4",
+    "react-native-debugger-open": "^0.3.17",
+    "react-test-renderer": "16.3.1",
+    "remote-redux-devtools": "^0.5.12",
+    "remotedev-rn-debugger": "^0.8.3"
+  },
+  "jest": {
+    "preset": "react-native"
+  }
+}
