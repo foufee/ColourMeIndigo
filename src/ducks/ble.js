@@ -113,13 +113,13 @@ export function checkPermissions() {
                 if (Platform.OS === 'android' && Platform.Version >= 23) {
                     PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION).then((result) => {
                         if (result) {
-                            resolve()
+                            return Promise.resolve();
                         } else {
                             PermissionsAndroid.requestPermission(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION).then((result) => {
                                 if (result) {
-                                    resolve();
+                                    return Promise.resolve();
                                 } else {
-                                    reject();
+                                    return Promise.reject();
                                 }
                             });
                         }
