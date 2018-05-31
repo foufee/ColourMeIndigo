@@ -1,15 +1,16 @@
 import React,{Component} from 'react';
-import {Image,View,Easing,TouchableOpacity,TouchableWithoutFeedback,Text , PanResponder, Animated} from 'react-native'
+import {Image,View,Easing,TouchableOpacity,TouchableWithoutFeedback,Text , PanResponder, Animated, Dimensions} from 'react-native'
 import {connectWithLifecycle} from "react-lifecycle-component";
 import * as filterWheelActions from "../ducks/filterWheel";
 
+const angle = 360.0/7.0
+
 class FilterWheelComponent extends Component {
     rotateWheel = new Animated.Value(0);
+
     state = {
-        start:0,
+        start:360-angle,
         end:360,
-        previousLeft:0,
-        previousTop:0
     }
     ;
     constructor(props) {
@@ -29,26 +30,50 @@ class FilterWheelComponent extends Component {
     _handlePanResponderMove = (e, gestureState) => {
         console.log("Move")
         // Just allow a little bit
-        var deg = (Math.atan(gestureState.dx/300)) * 180/Math.PI;
+        var deg = (Math.atan(gestureState.dx/200)) * 180/Math.PI;
+        var target = deg;
         console.log(deg, this.state)
-        this.rotateWheel.setValue(this.state.start + deg);
+        if (this.state.end == 360 && gestureState.dx > 0) {
+            target = deg;
+        } else if (this.state.start == 0 && gestureState.dx < 0) {
+            target = 360 + angle + deg;
+        } else {
+            target = this.state.end + deg;
+        }
+
+        console.log("Setting target to:", target)
+        this.rotateWheel.setValue(target);
     }
 
     _handlePanResponderEnd = (e, gestureState) => {
-        console.log("End",this.props)
-        if (gestureState.dx<0) this.props.onLeft()
-        else this.props.onRight()
+        const screenWidth = Dimensions.get("window").width;
+
+        if (Math.abs(gestureState.vx) >= 0.5 || Math.abs(gestureState.dx) >= 0.33 * screenWidth) {
+            if (gestureState.dx<0) this.props.onLeft()
+            else this.props.onRight()
+        } else {
+            Animated.spring(this.rotateWheel, {
+                toValue: this.state.end,
+                duration: 1000,
+                bounciness: 10
+            }).start();
+        }
+
+
+
     }
 
     componentWillReceiveProps(nextProps) {
+
         console.log("CWRP", nextProps, this.state)
         this.setState( {
             start:nextProps.start,
             end:nextProps.end
         });
+
         Animated.spring(this.rotateWheel, {
-            toValue: this.state.end,
-            duration:1000,
+            toValue: nextProps.end,
+            duration: 1000,
             bounciness: 10
         }).start();
     }
@@ -58,7 +83,6 @@ class FilterWheelComponent extends Component {
             inputRange: [0, 360],
             outputRange: ['0deg', '360deg']
         })
-        console.log("Yep it changed",spin, {...this._panResponder})
         return (
             <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}} >
                 <Animated.Image  source={require('../../public/filterWheel.png')}
@@ -70,9 +94,12 @@ class FilterWheelComponent extends Component {
 }
 
 const mapStateToProps = (state, ownprops) => {
+    let pc = state.getIn(['filterWheel','previousColor']);
+    let c = state.getIn(['filterWheel','selectedColor']);
+
     var props = {
-        start: (state.getIn(['filterWheel','selectedColor'])-1)*(360/7.0),
-        end: state.getIn(['filterWheel','selectedColor'])*(360/7.0)
+        start: (state.getIn(['filterWheel','selectedColor']))*(360/7.0),
+        end: (state.getIn(['filterWheel','selectedColor'])+1)*(360/7.0)
     }
 
     return props;

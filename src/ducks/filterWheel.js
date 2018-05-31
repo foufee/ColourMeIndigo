@@ -6,7 +6,7 @@ const _RIGHT = 'filterwheel/RIGHT';
 
 
 export const InitialState = new Map( {
-    selectedColor:0,
+    selectedColor:0
 })
 
 export function left() {
@@ -19,10 +19,25 @@ export function right() {
 
 export default function reducer(state = InitialState, action) {
     switch(action.type) {
-        case _LEFT:
-            return state.set('selectedColor', state.get('selectedColor') - 1);
+        case _LEFT: {
+            let c = state.get('selectedColor');
+            if (c == 0) {
+                c = 6
+            } else {
+                c = c-1;
+            }
+            return state.set('selectedColor',  c)
+        }
         case _RIGHT:
-            return state.set('selectedColor', (state.get('selectedColor') + 1)%7);
+        {
+            let c = state.get('selectedColor');
+            if (c == 6) {
+                c = 0
+            } else {
+                c = c+1;
+            }
+            return state.set('selectedColor',  c);
+        }
     }
     return state;
 }
