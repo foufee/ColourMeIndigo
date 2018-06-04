@@ -10,12 +10,14 @@ class FilterWheelComponent extends Component {
     rotateWheel = new Animated.Value(0);
 
     state = {
-        selectedColor:0
+        selectedColor:0,
+        direction:'ccw',
+        startGesture:undefined,
+        hit:[]
     }
     ;
     constructor(props) {
         super(props);
-        console.log("In COns",props)
 
         this._panResponder = PanResponder.create({
             onMoveShouldSetResponderCapture: () => true,
@@ -30,7 +32,9 @@ class FilterWheelComponent extends Component {
         let wx = v[0] - this.state.layout.px;
         let wy = v[1] - this.state.layout.py;
 
-        let initial_touch_distance_dx = this.state.layout.widget_centerPoint[0] - wx;
+        console.log(wx, wy,this.state.layout.widget_centerPoint);
+
+        let initial_touch_distance_dx = wx - this.state.layout.widget_centerPoint[0] ;
         let initial_touch_distance_dy = this.state.layout.widget_centerPoint[1] - wy;
 
         let touch_vector_length = Math.sqrt((initial_touch_distance_dx*initial_touch_distance_dx) + (initial_touch_distance_dy*initial_touch_distance_dy));
@@ -49,8 +53,11 @@ class FilterWheelComponent extends Component {
         console.log(gestureState,this.state)
         let sgVp = this.widgetCoordToUnitVector([gestureState.x0,gestureState.y0]);
         console.log(sgVp)
+        let hitX = sgVp[0] / Math.abs(sgVp[0])
+        let hitY = sgVp[1] / Math.abs(sgVp[1])
         this.setState({
-            startGesture:sgVp
+            startGesture:sgVp,
+            hit:[hitX,hitY]
         })
         return true;
     }
@@ -66,15 +73,62 @@ class FilterWheelComponent extends Component {
     }
 
     _handlePanResponderMove = (e, gestureState) => {
-        console.log(this.state)
-        this.rotateWheel.setValue((this.state.selectedColor * angle) + this.gestureStateToAngle(gestureState));
+        let curLocUV = this.widgetCoordToUnitVector([gestureState.moveX,gestureState.moveY])
+        let cur = [curLocUV[0] / Math.abs(curLocUV[0]), curLocUV[1] / Math.abs(curLocUV[1])]
+        console.log("Quad:",cur, this.state.hit)
+        let direction = this.state.direction;
+        if (cur[0] === this.state.hit[0] && cur[1] === this.state.hit[1]) {
+            if (cur[0] == -1 && cur[1] == -1 ) {
+                // Bottom Left
+                if (curLocUV[0] < this.state.startGesture[0]) {
+                    direction = 'cw'
+                } else {
+                    direction = 'ccw'
+                }
+            } else if (cur[0] == 1 && cur[1] == -1 ) {
+                // Bottom Right
+                if (curLocUV[0] > this.state.startGesture[0]) {
+                    direction = 'ccw'
+                } else {
+                    direction = 'cw'
+                }
+            } else if (cur[0] == -1 && cur[1] == 1 ) {
+                // Top Left
+                if (curLocUV[0] < this.state.startGesture[0]) {
+                    direction = 'ccw'
+                } else {
+                    direction = 'cw'
+                }
+            } else if (cur[0] == 1 && cur[1] == 1) {
+                // Top Right
+                if (curLocUV[0] > this.state.startGesture[0]) {
+                    direction = 'cw'
+                } else {
+                    direction = 'ccw'
+                }
+            }
+        }
+        console.log("Direction:",direction)
+        console.log("Move:",this.state)
+        this.setState({
+            direction: direction
+        })
+        this.rotateWheel.setValue(((this.state.selectedColor + 1) * angle) - this.gestureStateToAngle(gestureState));
 
     }
 
     _handlePanResponderEnd = (e, gestureState) => {
-        let deg = Math.abs((this.state.selectedColor * angle) + this.gestureStateToAngle(gestureState));
+        let directionMulti = 1;
+        if (this.state.direction == 'cw') {
+            directionMulti = 1
+        } else {
+            directionMulti = -1;
+        }
+
+        let deg = Math.abs(((this.state.selectedColor + 1) * angle) + (this.gestureStateToAngle(gestureState) * directionMulti);
         let target = Math.floor(deg / angle);
         let r = deg % angle;
+        console.log(deg,target,r)
         if (r > angle/2.0) {
             console.log("Jumping")
             target = target + 1;
@@ -118,8 +172,8 @@ class FilterWheelComponent extends Component {
             outputRange: ['0deg', '360deg']
         })
         return (
-            <View  style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}} >
-                <Animated.Image ref={component => { this.imageComponent = component ; }} onLayout={this.measureView} source={require('../../public/filterWheel.png')}
+            <View  style={{flex: 1, flexDirection: 'row', justifyContent: 'center', }} >
+                <Animated.Image ref={component => { this.imageComponent = component ; }} onLayout={this.measureView} source={require('../../public/filterWheel_debug.png')}
                               style={{transform: [{rotate: spin}]}} {...this._panResponder.panHandlers}/>
             </View>
         )
