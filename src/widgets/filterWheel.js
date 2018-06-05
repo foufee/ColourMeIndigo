@@ -20,6 +20,7 @@ class FilterWheelComponent extends Component {
         selectedColor:0,
         direction:'ccw',
         previous_quad:'',
+        startAngle:0,
         startGestureUV:undefined,
     }
     ;
@@ -48,33 +49,28 @@ class FilterWheelComponent extends Component {
     }
 
     angleBetweenPoints = (p1,p2, direction) => {
-        let startAngle = (Math.PI/2) - Math.atan2(p1[1], p1[0]);
-        let endAngle = (Math.PI/2) - Math.atan2(p2[1], p2[0]);
-/*
-        switch (this.uvToQuad(p1)) {
+        let startAngle = ((Math.PI/2) - Math.atan2(p1[1], p1[0]))* (180/Math.PI);
+        let endAngle = ((Math.PI/2) - Math.atan2(p2[1], p2[0]))* (180/Math.PI);
+
+        let quad_p1 = this.uvToQuad(p1);
+        switch (quad_p1) {
             case TOP_LEFT:
-            case BOTTOM_LEFT:
-                startAngle = (Math.PI * 2) - startAngle
+                startAngle = 360 + startAngle;
         }
 
-        switch (this.uvToQuad(p2)) {
+        let quad_p2 = this.uvToQuad(p2);
+        switch (quad_p2) {
             case TOP_LEFT:
-            case BOTTOM_LEFT:
-                endAngle = (Math.PI * 2) - endAngle
+                endAngle = 360 + endAngle;
         }
-*/
-        switch (direction) {
-            case CW:
 
-                console.log("CW",(startAngle * (180/Math.PI)),(endAngle * (180/Math.PI)));
-                return endAngle - startAngle
-                break;
-            case CCW:
-
-                console.log("CCW",(startAngle * (180/Math.PI)),(endAngle * (180/Math.PI)));
-                return startAngle - endAngle
-                break;
+        let deg = endAngle - startAngle;
+        if (deg < 0) {
+            deg = 360 + deg;
         }
+        console.log("ABP",quad_p1, quad_p2,deg,startAngle,endAngle)
+        return deg;
+
     }
 
     uvToQuad = (uv) => {
@@ -120,9 +116,11 @@ class FilterWheelComponent extends Component {
 
     _handlePanResponderGrant = (e, gestureState) => {
         let startGestureUV = this.widgetCoordToUnitVector([gestureState.x0,gestureState.y0]);
+        let startAngle = ((Math.PI/2) - Math.atan2(startGestureUV[1], startGestureUV[0]))
 
         this.setState({
             startGestureUV:startGestureUV,
+            startAngle:startAngle,
             previous_quad: this.uvToQuad(startGestureUV)
         })
         return true;
@@ -130,7 +128,7 @@ class FilterWheelComponent extends Component {
 
     directionalRotation = (fromUV, toUV, direction) => {
         let mvAngle = this.angleBetweenPoints(fromUV, toUV, direction);
-        let rotAngle = mvAngle * 180/Math.PI;
+        let rotAngle = mvAngle;
         console.log("RotAngle:",rotAngle)
         return rotAngle;
     }
@@ -145,11 +143,7 @@ class FilterWheelComponent extends Component {
         })
 
         let deg = (this.state.selectedColor * angle)  + this.directionalRotation(this.state.startGestureUV, currentHitUV,direction);
-        /*
-        if (direction == 'ccw') {
-            deg = 360 - Math.abs(deg)
-        }
-        */
+
         console.log("Move:",direction, deg)
         this.rotateWheel.setValue(deg);
 
@@ -160,6 +154,8 @@ class FilterWheelComponent extends Component {
         let direction = this.uvToDirection(currentHitUV);
 
         let deg = (this.state.selectedColor * angle)  + this.directionalRotation(this.state.startGestureUV, currentHitUV,direction);
+
+
 
         let target = Math.floor(deg / angle);
         let r = deg % angle;
