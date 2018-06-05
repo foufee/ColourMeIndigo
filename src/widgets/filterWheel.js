@@ -5,6 +5,13 @@ import * as filterWheelActions from "../ducks/filterWheel";
 
 const numberOfColors = 7
 const angle = 360.0/numberOfColors
+const CCW = 'ccw'
+const CW = 'cw'
+const TOP_LEFT = 'tl';
+const TOP_RIGHT = 'tr'
+const BOTTOM_LEFT = 'bl'
+const BOTTOM_RIGHT = 'br'
+// UV = Unit vector
 
 class FilterWheelComponent extends Component {
     rotateWheel = new Animated.Value(0);
@@ -12,8 +19,8 @@ class FilterWheelComponent extends Component {
     state = {
         selectedColor:0,
         direction:'ccw',
-        startGesture:undefined,
-        hit:[]
+        previous_quad:'',
+        startGestureUV:undefined,
     }
     ;
     constructor(props) {
@@ -32,8 +39,6 @@ class FilterWheelComponent extends Component {
         let wx = v[0] - this.state.layout.px;
         let wy = v[1] - this.state.layout.py;
 
-        console.log(wx, wy,this.state.layout.widget_centerPoint);
-
         let initial_touch_distance_dx = wx - this.state.layout.widget_centerPoint[0] ;
         let initial_touch_distance_dy = this.state.layout.widget_centerPoint[1] - wy;
 
@@ -42,99 +47,129 @@ class FilterWheelComponent extends Component {
         return [initial_touch_distance_dx / touch_vector_length, initial_touch_distance_dy / touch_vector_length]
     }
 
-    angleBetweenPoints = (p1,p2) => {
-        let vp = [p1[0]-p2[0],p1[1]-p2[1]]
-        let angle = 2 * Math.atan2(p2[1]-p1[1], p2[0]-p1[0]);
-        return angle
+    angleBetweenPoints = (p1,p2, direction) => {
+        let startAngle = (Math.PI/2) - Math.atan2(p1[1], p1[0]);
+        let endAngle = (Math.PI/2) - Math.atan2(p2[1], p2[0]);
+/*
+        switch (this.uvToQuad(p1)) {
+            case TOP_LEFT:
+            case BOTTOM_LEFT:
+                startAngle = (Math.PI * 2) - startAngle
+        }
 
+        switch (this.uvToQuad(p2)) {
+            case TOP_LEFT:
+            case BOTTOM_LEFT:
+                endAngle = (Math.PI * 2) - endAngle
+        }
+*/
+        switch (direction) {
+            case CW:
+
+                console.log("CW",(startAngle * (180/Math.PI)),(endAngle * (180/Math.PI)));
+                return endAngle - startAngle
+                break;
+            case CCW:
+
+                console.log("CCW",(startAngle * (180/Math.PI)),(endAngle * (180/Math.PI)));
+                return startAngle - endAngle
+                break;
+        }
+    }
+
+    uvToQuad = (uv) => {
+        let quad = [uv[0] / Math.abs(uv[0]), uv[1] / Math.abs(uv[1])]
+
+        if (quad[0] == -1 && quad[1] == -1 ) {
+            return BOTTOM_LEFT
+        } else if (quad[0] == 1 && quad[1] == -1 ) {
+            return BOTTOM_RIGHT
+        } else if (quad[0] == -1 && quad[1] == 1 ) {
+            return TOP_LEFT
+        } else if (quad[0] == 1 && quad[1] == 1) {
+            return TOP_RIGHT
+        }
+    }
+
+    uvToDirection = (hitUV) => {
+        let quad = this.uvToQuad(hitUV);
+        if (quad == this.state.previous_quad) {
+            switch (quad) {
+                case BOTTOM_LEFT:
+                    return hitUV[0] < this.state.startGestureUV[0] ? CW : CCW;
+                case BOTTOM_RIGHT:
+                    return hitUV[0] > this.state.startGestureUV[0] ? CCW : CW;
+                case TOP_LEFT:
+                    return hitUV[0] < this.state.startGestureUV[0] ? CCW : CW;
+                case TOP_RIGHT:
+                    return hitUV[0] > this.state.startGestureUV[0] ? CW : CCW;
+            }
+        } else {
+            switch (quad) {
+                case BOTTOM_LEFT:
+                    return this.state.previous_quad == BOTTOM_RIGHT ? CW : CCW;
+                case BOTTOM_RIGHT:
+                    return this.state.previous_quad == TOP_RIGHT ? CW : CCW;
+                case TOP_LEFT:
+                    return this.state.previous_quad == BOTTOM_LEFT ? CW : CCW;
+                case TOP_RIGHT:
+                    return this.state.previous_quad == TOP_LEFT ? CW : CCW;
+            }
+        }
     }
 
     _handlePanResponderGrant = (e, gestureState) => {
-        console.log(gestureState,this.state)
-        let sgVp = this.widgetCoordToUnitVector([gestureState.x0,gestureState.y0]);
-        console.log(sgVp)
-        let hitX = sgVp[0] / Math.abs(sgVp[0])
-        let hitY = sgVp[1] / Math.abs(sgVp[1])
+        let startGestureUV = this.widgetCoordToUnitVector([gestureState.x0,gestureState.y0]);
+
         this.setState({
-            startGesture:sgVp,
-            hit:[hitX,hitY]
+            startGestureUV:startGestureUV,
+            previous_quad: this.uvToQuad(startGestureUV)
         })
         return true;
     }
 
-    gestureStateToAngle = (gestureState) => {
-        let curLocUV = this.widgetCoordToUnitVector([gestureState.moveX,gestureState.moveY])
-        console.log(curLocUV, this.state.startGesture)
-        let mvAngle = this.angleBetweenPoints(this.state.startGesture, curLocUV);
+    directionalRotation = (fromUV, toUV, direction) => {
+        let mvAngle = this.angleBetweenPoints(fromUV, toUV, direction);
         let rotAngle = mvAngle * 180/Math.PI;
         console.log("RotAngle:",rotAngle)
-        console.log("RotAngleOther",360-rotAngle)
         return rotAngle;
     }
 
     _handlePanResponderMove = (e, gestureState) => {
-        let curLocUV = this.widgetCoordToUnitVector([gestureState.moveX,gestureState.moveY])
-        let cur = [curLocUV[0] / Math.abs(curLocUV[0]), curLocUV[1] / Math.abs(curLocUV[1])]
-        console.log("Quad:",cur, this.state.hit)
-        let direction = this.state.direction;
-        if (cur[0] === this.state.hit[0] && cur[1] === this.state.hit[1]) {
-            if (cur[0] == -1 && cur[1] == -1 ) {
-                // Bottom Left
-                if (curLocUV[0] < this.state.startGesture[0]) {
-                    direction = 'cw'
-                } else {
-                    direction = 'ccw'
-                }
-            } else if (cur[0] == 1 && cur[1] == -1 ) {
-                // Bottom Right
-                if (curLocUV[0] > this.state.startGesture[0]) {
-                    direction = 'ccw'
-                } else {
-                    direction = 'cw'
-                }
-            } else if (cur[0] == -1 && cur[1] == 1 ) {
-                // Top Left
-                if (curLocUV[0] < this.state.startGesture[0]) {
-                    direction = 'ccw'
-                } else {
-                    direction = 'cw'
-                }
-            } else if (cur[0] == 1 && cur[1] == 1) {
-                // Top Right
-                if (curLocUV[0] > this.state.startGesture[0]) {
-                    direction = 'cw'
-                } else {
-                    direction = 'ccw'
-                }
-            }
-        }
-        console.log("Direction:",direction)
-        console.log("Move:",this.state)
+        let currentHitUV = this.widgetCoordToUnitVector([gestureState.moveX,gestureState.moveY])
+        let direction = this.uvToDirection(currentHitUV);
+
         this.setState({
-            direction: direction
+            direction: direction,
+            previous_quad: this.uvToQuad(currentHitUV)
         })
-        this.rotateWheel.setValue(((this.state.selectedColor + 1) * angle) - this.gestureStateToAngle(gestureState));
+
+        let deg = (this.state.selectedColor * angle)  + this.directionalRotation(this.state.startGestureUV, currentHitUV,direction);
+        /*
+        if (direction == 'ccw') {
+            deg = 360 - Math.abs(deg)
+        }
+        */
+        console.log("Move:",direction, deg)
+        this.rotateWheel.setValue(deg);
 
     }
 
     _handlePanResponderEnd = (e, gestureState) => {
-        let directionMulti = 1;
-        if (this.state.direction == 'cw') {
-            directionMulti = 1
-        } else {
-            directionMulti = -1;
-        }
+        let currentHitUV = this.widgetCoordToUnitVector([gestureState.moveX,gestureState.moveY])
+        let direction = this.uvToDirection(currentHitUV);
 
-        let deg = Math.abs(((this.state.selectedColor + 1) * angle) + (this.gestureStateToAngle(gestureState) * directionMulti);
+        let deg = (this.state.selectedColor * angle)  + this.directionalRotation(this.state.startGestureUV, currentHitUV,direction);
+
         let target = Math.floor(deg / angle);
         let r = deg % angle;
-        console.log(deg,target,r)
+        console.log("END:",deg,target,r)
         if (r > angle/2.0) {
             console.log("Jumping")
             target = target + 1;
         }
-        console.log("Target",target,target%7)
-        this.setState({ selectedColor:target%7 })
+        console.log("Target",target,target%7, (target%7)*angle)
+        this.setState({ selectedColor:Math.abs(target%7) })
         this.props.onPickColor(target%7)
         Animated.spring(this.rotateWheel, {
             toValue: target * angle,
