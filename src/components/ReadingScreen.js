@@ -1,8 +1,9 @@
 import React from 'react';
 import DeviceList from '../containers/DeviceList'
-import { Content,Card,CardItem,Header, Left, Right, Body, Title, Container,Button,Text,Icon } from 'native-base'
+import { Content,Card,CardItem,Header, Left, Right, Body, Title, Container,Button,Text,Icon,Picker } from 'native-base'
 import { ImageBackground } from 'react-native'
 import FilterWheel from '../widgets/filterWheel'
+import Slider from '../widgets/slider'
 
 const ReadingScreen = (props) => {
     const {
@@ -29,6 +30,7 @@ const ReadingScreen = (props) => {
             </Header>
             <Content>
                 <FilterWheel/>
+
                 <Text>Hello</Text>
             </Content>
         </Container>

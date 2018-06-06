@@ -3,10 +3,9 @@ import {Image,View,Easing,TouchableOpacity,TouchableWithoutFeedback,Text , PanRe
 import {connectWithLifecycle} from "react-lifecycle-component";
 import * as filterWheelActions from "../ducks/filterWheel";
 
-const numberOfColors = 7
+const COLORS = ['RED','ALL','VIOLET','BLUE','GREEN','YELLOW','ORANGE']
+const numberOfColors = COLORS.length
 const angle = 360.0/numberOfColors
-const CCW = 'ccw'
-const CW = 'cw'
 const TOP_LEFT = 'tl';
 const TOP_RIGHT = 'tr'
 const BOTTOM_LEFT = 'bl'
@@ -18,9 +17,6 @@ class FilterWheelComponent extends Component {
 
     state = {
         selectedColor:0,
-        direction:'ccw',
-        previous_quad:'',
-        startAngle:0,
         startGestureUV:undefined,
     }
     ;
@@ -48,7 +44,7 @@ class FilterWheelComponent extends Component {
         return [initial_touch_distance_dx / touch_vector_length, initial_touch_distance_dy / touch_vector_length]
     }
 
-    angleBetweenPoints = (p1,p2, direction) => {
+    angleBetweenPoints = (p1,p2) => {
         let startAngle = ((Math.PI/2) - Math.atan2(p1[1], p1[0]))* (180/Math.PI);
         let endAngle = ((Math.PI/2) - Math.atan2(p2[1], p2[0]))* (180/Math.PI);
 
@@ -68,9 +64,7 @@ class FilterWheelComponent extends Component {
         if (deg < 0) {
             deg = 360 + deg;
         }
-        console.log("ABP",quad_p1, quad_p2,deg,startAngle,endAngle)
         return deg;
-
     }
 
     uvToQuad = (uv) => {
@@ -87,41 +81,10 @@ class FilterWheelComponent extends Component {
         }
     }
 
-    uvToDirection = (hitUV) => {
-        let quad = this.uvToQuad(hitUV);
-        if (quad == this.state.previous_quad) {
-            switch (quad) {
-                case BOTTOM_LEFT:
-                    return hitUV[0] < this.state.startGestureUV[0] ? CW : CCW;
-                case BOTTOM_RIGHT:
-                    return hitUV[0] > this.state.startGestureUV[0] ? CCW : CW;
-                case TOP_LEFT:
-                    return hitUV[0] < this.state.startGestureUV[0] ? CCW : CW;
-                case TOP_RIGHT:
-                    return hitUV[0] > this.state.startGestureUV[0] ? CW : CCW;
-            }
-        } else {
-            switch (quad) {
-                case BOTTOM_LEFT:
-                    return this.state.previous_quad == BOTTOM_RIGHT ? CW : CCW;
-                case BOTTOM_RIGHT:
-                    return this.state.previous_quad == TOP_RIGHT ? CW : CCW;
-                case TOP_LEFT:
-                    return this.state.previous_quad == BOTTOM_LEFT ? CW : CCW;
-                case TOP_RIGHT:
-                    return this.state.previous_quad == TOP_LEFT ? CW : CCW;
-            }
-        }
-    }
-
     _handlePanResponderGrant = (e, gestureState) => {
         let startGestureUV = this.widgetCoordToUnitVector([gestureState.x0,gestureState.y0]);
-        let startAngle = ((Math.PI/2) - Math.atan2(startGestureUV[1], startGestureUV[0]))
-
         this.setState({
             startGestureUV:startGestureUV,
-            startAngle:startAngle,
-            previous_quad: this.uvToQuad(startGestureUV)
         })
         return true;
     }
@@ -129,44 +92,29 @@ class FilterWheelComponent extends Component {
     directionalRotation = (fromUV, toUV, direction) => {
         let mvAngle = this.angleBetweenPoints(fromUV, toUV, direction);
         let rotAngle = mvAngle;
-        console.log("RotAngle:",rotAngle)
         return rotAngle;
     }
 
     _handlePanResponderMove = (e, gestureState) => {
         let currentHitUV = this.widgetCoordToUnitVector([gestureState.moveX,gestureState.moveY])
-        let direction = this.uvToDirection(currentHitUV);
-
-        this.setState({
-            direction: direction,
-            previous_quad: this.uvToQuad(currentHitUV)
-        })
-
-        let deg = (this.state.selectedColor * angle)  + this.directionalRotation(this.state.startGestureUV, currentHitUV,direction);
-
-        console.log("Move:",direction, deg)
+        let deg = (this.state.selectedColor * angle)  + this.directionalRotation(this.state.startGestureUV, currentHitUV);
         this.rotateWheel.setValue(deg);
 
     }
 
     _handlePanResponderEnd = (e, gestureState) => {
         let currentHitUV = this.widgetCoordToUnitVector([gestureState.moveX,gestureState.moveY])
-        let direction = this.uvToDirection(currentHitUV);
-
-        let deg = (this.state.selectedColor * angle)  + this.directionalRotation(this.state.startGestureUV, currentHitUV,direction);
-
-
+        let deg = (this.state.selectedColor * angle)  + this.directionalRotation(this.state.startGestureUV, currentHitUV);
 
         let target = Math.floor(deg / angle);
         let r = deg % angle;
-        console.log("END:",deg,target,r)
         if (r > angle/2.0) {
-            console.log("Jumping")
             target = target + 1;
         }
-        console.log("Target",target,target%7, (target%7)*angle)
         this.setState({ selectedColor:Math.abs(target%7) })
-        this.props.onPickColor(target%7)
+
+
+        this.props.onPickColor(COLORS[target%7])
         Animated.spring(this.rotateWheel, {
             toValue: target * angle,
             duration: 1000,
@@ -193,7 +141,7 @@ class FilterWheelComponent extends Component {
 
     componentWillReceiveProps(nextProps) {
         this.setState( {
-            selectedColor:nextProps.selectedColor
+            selectedColor: COLORS.indexOf(nextProps.selectedColor)
         });
     }
 
@@ -222,8 +170,8 @@ const mapStateToProps = (state, ownprops) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onPickColor: (colorIdx) => {
-            dispatch(filterWheelActions.selectColor(colorIdx))
+        onPickColor: (color) => {
+            dispatch(filterWheelActions.selectColor(color))
         },
     };
 };
