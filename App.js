@@ -25,13 +25,14 @@ const store = configureStore;
 import HomeScreen from './src/components/HomeScreen'
 import SideBar from './src/components/SideBar'
 import ReadingScreen from "./src/containers/ReadingScreen";
+import SettingsScreen from "./src/containers/Settings";
 
 
-const RootStack = createDrawerNavigator({
-    Home: {
-        screen: HomeScreen
-    },
-    Reading: { screen: ReadingScreen }
+const RootStack = createDrawerNavigator(
+    {
+        Home: {screen: HomeScreen},
+        Reading: {screen: ReadingScreen},
+        Settings: {screen: SettingsScreen},
     },
     {
         contentComponent: props => <SideBar {...props} />

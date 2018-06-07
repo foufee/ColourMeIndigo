@@ -1,7 +1,5 @@
 import React,{Component} from 'react';
 import {Image,View,Easing,TouchableOpacity,TouchableWithoutFeedback,Text , PanResponder, Animated, Dimensions} from 'react-native'
-import {connectWithLifecycle} from "react-lifecycle-component";
-import * as filterWheelActions from "../ducks/filterWheel";
 
 const COLORS = ['RED','ALL','VIOLET','BLUE','GREEN','YELLOW','ORANGE']
 const numberOfColors = COLORS.length
@@ -12,7 +10,7 @@ const BOTTOM_LEFT = 'bl'
 const BOTTOM_RIGHT = 'br'
 // UV = Unit vector
 
-class FilterWheelComponent extends Component {
+class FilterWheel extends Component {
     rotateWheel = new Animated.Value(0);
 
     state = {
@@ -159,26 +157,5 @@ class FilterWheelComponent extends Component {
     }
 
 }
-
-const mapStateToProps = (state, ownprops) => {
-    var props = {
-        selectedColor: (state.getIn(['filterWheel','selectedColor']))
-    }
-
-    return props;
-};
-
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onPickColor: (color) => {
-            dispatch(filterWheelActions.selectColor(color))
-        },
-    };
-};
-
-export const FilterWheel = connectWithLifecycle(
-    mapStateToProps,
-    mapDispatchToProps
-)(FilterWheelComponent );
 
 export default FilterWheel;
