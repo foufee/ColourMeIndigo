@@ -9,6 +9,8 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 const ReadingScreen = (props) => {
     const {
         navigation,
+        onToggleIlluminate,
+        illuminated,
         selectedColor,
         onSelectColor
     } = props;
@@ -30,7 +32,11 @@ const ReadingScreen = (props) => {
                 <Title>Take Sample</Title>
                 </Body>
                 <Right>
-                    <Icon name="flashlight" size={30}/>
+                    <Button
+                        transparent
+                        onPress={ () => { onToggleIlluminate(!illuminated) }} >
+                        <Icon name="flashlight" size={30} style={ {color:illuminated ? 'white' : 'black'}}/>
+                    </Button>
                 </Right>
             </Header>
             <Content >

@@ -18,7 +18,8 @@ const _DISCOVERED = 'ble/DISCOVERED';
 const _CONNECTED = 'ble/CONNECTED';
 const _CONNECTING = 'ble/CONNECTING';
 const _CONNECTION_FAILED = 'ble/CONNECTION_FAILED';
-
+const _LED_ON = 'ble/LED_ON';
+const _LED_OFF = 'ble/LED_OFF';
 const CHECK_PERMISSIONS = 'ble/CHECKPERMISSSIONS'
 
 /*
@@ -35,6 +36,9 @@ uint8_t colorMeIndigoCalibYellowUUID[]         = {0x0a,0x7e,0x26,0x09,0xcb,0xa4,
 uint8_t colorMeIndigoCalibOrangeUUID[]         = {0x0a,0x7e,0x26,0x0A,0xcb,0xa4,0x43,0x28,0xb7,0x23,0x72,0xd4,0x24,0x0c,0x17,0x05}; // R/W
 uint8_t colorMeIndigoCalibRedUUID[]            = {0x0a,0x7e,0x26,0x0B,0xcb,0xa4,0x43,0x28,0xb7,0x23,0x72,0xd4,0x24,0x0c,0x17,0x05}; // R/W
  */
+const CMI_SERVICE_UUID   = '0a732600-cba4-4328-b723-72d4240c11705'
+const CMI_LED_STATE_UUID = '0a732601-cba4-4328-b723-72d4240c11705'
+
 export const InitialState = new Map( {
     scanning:false,
     connectingTo:'',
@@ -81,6 +85,19 @@ function handleScanFinished(dispatch) {
     }
 }
 
+function ledOn() {
+    return {
+        type: _LED_ON,
+        state:true
+    }
+}
+
+function ledOff() {
+    return {
+        type: _LED_OFF,
+        state:false
+    }
+}
 
 function handleDiscoverPeripheral(dispatch, peripheral)
 {
@@ -100,12 +117,12 @@ export function connectToDevice(deviceId) {
     return function (dispatch) {
         dispatch(connecting(deviceId));
         return BleManager.connect(deviceId)
-            .then( () => {
-                return dispatch(connected(deviceId));
-            })
-            .catch( (e) => {
-                return dispatch(connectionFailed());
-            });
+            .then( () => BleManager.retrieveServices(deviceId) )
+            .then( (peripheralInfo) => {
+                console.log(peripheralInfo);
+                return dispatch(connected(deviceId))
+            } )
+            .catch( (e) => dispatch(connectionFailed() ));
     }
 }
 
@@ -161,8 +178,12 @@ function sampleChannel(color,v) {
 }
 
 
-export function illuminateLED(state) {
-
+export function illuminateLED(ledState) {
+    return (dispatch,getState) => {
+        return BleManager.write(getState().get('connectedTo'), CMI_SERVICE_UUID, CMI_LED_STATE_UUID, ledState ? 1 : 0 , 1)
+            .then( () => dispatch(ledState ? ledOn() : ledOff()) )
+            .catch( (e) => { console.warn(e) })
+    }
 }
 
 export function setGain(gain) {
@@ -193,6 +214,8 @@ export default function reducer(state = InitialState, action) {
             return state.setIn(['connectingTo'], '').setIn(['connectedTo'], action.id);
         case _CONNECTION_FAILED:
             return state.setIn(['connectingTo'], '').setIn(['connectedTo'], '');
+        case _LED_ON:
+            return state.setIn(['spectrometer','illuminated'], action.state)
     }
     return state;
 }
