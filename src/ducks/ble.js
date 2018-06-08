@@ -36,8 +36,23 @@ uint8_t colorMeIndigoCalibYellowUUID[]         = {0x0a,0x7e,0x26,0x09,0xcb,0xa4,
 uint8_t colorMeIndigoCalibOrangeUUID[]         = {0x0a,0x7e,0x26,0x0A,0xcb,0xa4,0x43,0x28,0xb7,0x23,0x72,0xd4,0x24,0x0c,0x17,0x05}; // R/W
 uint8_t colorMeIndigoCalibRedUUID[]            = {0x0a,0x7e,0x26,0x0B,0xcb,0xa4,0x43,0x28,0xb7,0x23,0x72,0xd4,0x24,0x0c,0x17,0x05}; // R/W
  */
-const CMI_SERVICE_UUID   = '0a732600-cba4-4328-b723-72d4240c11705'
-const CMI_LED_STATE_UUID = '0a732601-cba4-4328-b723-72d4240c11705'
+const CMI_SERVICE_UUID   = '0a7e2600-cba4-4328-b723-72d4240c1705'
+const CMI_LED_STATE_UUID = '0a7e2601-cba4-4328-b723-72d4240c1705'
+
+const CMI_UUIDS = {
+    service:'0a7e2600-cba4-4328-b723-72d4240c1705',
+    LED    :'0a7e2601-cba4-4328-b723-72d4240c1705',
+    LED_Drv:'0a7e2602-cba4-4328-b723-72d4240c1705',
+    gain   :'0a7e2603-cba4-4328-b723-72d4240c1705',
+    intTime:'0a7e2604-cba4-4328-b723-72d4240c1705',
+    mode   :'0a7e2605-cba4-4328-b723-72d4240c1705',
+    violet :'0a7e2606-cba4-4328-b723-72d4240c1705',
+    blue   :'0a7e2607-cba4-4328-b723-72d4240c1705',
+    green  :'0a7e2608-cba4-4328-b723-72d4240c1705',
+    yellow :'0a7e2609-cba4-4328-b723-72d4240c1705',
+    orange :'0a7e260a-cba4-4328-b723-72d4240c1705',
+    red    :'0a7e260b-cba4-4328-b723-72d4240c1705',
+}
 
 export const InitialState = new Map( {
     scanning:false,
@@ -180,8 +195,14 @@ function sampleChannel(color,v) {
 
 export function illuminateLED(ledState) {
     return (dispatch,getState) => {
-        return BleManager.write(getState().get('connectedTo'), CMI_SERVICE_UUID, CMI_LED_STATE_UUID, ledState ? 1 : 0 , 1)
+        console.log("Illuminating")
+        return BleManager.write(getState().getIn(['ble','connectedTo']), CMI_SERVICE_UUID, CMI_LED_STATE_UUID, ledState ? [1] : [0] , 1)
             .then( () => dispatch(ledState ? ledOn() : ledOff()) )
+            .then( () => {
+                let state = getState();
+
+                console.log("Can now take readings")
+            })
             .catch( (e) => { console.warn(e) })
     }
 }
@@ -215,6 +236,7 @@ export default function reducer(state = InitialState, action) {
         case _CONNECTION_FAILED:
             return state.setIn(['connectingTo'], '').setIn(['connectedTo'], '');
         case _LED_ON:
+        case _LED_OFF:
             return state.setIn(['spectrometer','illuminated'], action.state)
     }
     return state;

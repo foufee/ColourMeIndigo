@@ -21,8 +21,8 @@ const mapDispatchToProps = (dispatch) => {
         onSelectColor: (c) => {
             dispatch(filterWheelActions.selectColor(c))
         },
-        onToggleIlluminate: (prevState) => {
-            dispatch(ble.illuminateLED(!prevState));
+        onToggleIlluminate: (state) => {
+            dispatch(ble.illuminateLED(state));
         }
     };
 };
