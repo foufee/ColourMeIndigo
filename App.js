@@ -23,7 +23,7 @@ import configureStore from './src/ducks/configureStore'
 const store = configureStore;
 
 import HomeScreen from './src/components/HomeScreen'
-import SideBar from './src/components/SideBar'
+import SideBar from './src/containers/SideBar'
 import ReadingScreen from "./src/containers/ReadingScreen";
 import SettingsScreen from "./src/containers/Settings";
 

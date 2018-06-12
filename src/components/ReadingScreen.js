@@ -1,10 +1,17 @@
 import React from 'react';
 import DeviceList from '../containers/DeviceList'
-import { Content,Card,CardItem,Header, Left, Right, Body, Title, Container,Button,Text,Picker } from 'native-base'
+import { Content,Card,CardItem,Header, Left, Right, Body, Title, Container,Button,Dimensions } from 'native-base'
 import { Col, Row, Grid} from 'react-native-easy-grid'
 import { ImageBackground, View , Slider, Switch} from 'react-native'
 import FilterWheel from '../widgets/filterWheel'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
+import {
+    LineChart,
+    BarChart,
+    PieChart,
+    ProgressChart,
+    ContributionGraph
+} from 'react-native-chart-kit'
 
 const ReadingScreen = (props) => {
     const {
@@ -45,7 +52,37 @@ const ReadingScreen = (props) => {
                         <FilterWheel selectedColor={selectedColor} onPickColor={ (c) => onSelectColor(c)}/>
                     </Row>
                     <Row style={{marginTop:-150, backgroundColor:'white'}}>
-                        <Text>Reading goes here</Text>
+                        <LineChart
+                            data={{
+                                labels: ['January', 'February', 'March', 'April', 'May', 'June'],
+                                datasets: [{
+                                    data: [
+                                        Math.random() * 100,
+                                        Math.random() * 100,
+                                        Math.random() * 100,
+                                        Math.random() * 100,
+                                        Math.random() * 100,
+                                        Math.random() * 100
+                                    ]
+                                }]
+                            }}
+                            width={500} // from react-native
+                            height={220}
+                            chartConfig={{
+                                backgroundColor: '#e26a00',
+                                backgroundGradientFrom: '#fb8c00',
+                                backgroundGradientTo: '#ffa726',
+                                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                                style: {
+                                    borderRadius: 16
+                                }
+                            }}
+                            bezier
+                            style={{
+                                marginVertical: 8,
+                                borderRadius: 16
+                            }}
+                        />
                     </Row>
                 </Grid>
             </Content>

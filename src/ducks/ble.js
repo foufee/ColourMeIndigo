@@ -21,6 +21,7 @@ const _CONNECTION_FAILED = 'ble/CONNECTION_FAILED';
 const _LED_ON = 'ble/LED_ON';
 const _LED_OFF = 'ble/LED_OFF';
 const CHECK_PERMISSIONS = 'ble/CHECKPERMISSSIONS'
+const _DISCONNECTED = 'ble/DISCONNECTED'
 
 /*
 uint8_t colorMeIndigoServiceUUID[]             = {0x0a,0x7e,0x26,0x00,0xcb,0xa4,0x43,0x28,0xb7,0x23,0x72,0xd4,0x24,0x0c,0x17,0x05};
@@ -114,6 +115,13 @@ function ledOff() {
     }
 }
 
+function disconnected() {
+    return {
+        type: _DISCONNECTED
+    }
+}
+
+
 function handleDiscoverPeripheral(dispatch, peripheral)
 {
     return (peripheral) =>
@@ -126,30 +134,66 @@ function handleDiscoverPeripheral(dispatch, peripheral)
     }
 }
 
+function handleDeviceStateChange(dispatch, state)
+{
+    console.log("here",state)
+    return (state) =>
+    {
+
+        console.log(state);
+    }
+}
 /*************** BLE Management Functions ********************/
 
 export function connectToDevice(deviceId) {
     return function (dispatch) {
         dispatch(connecting(deviceId));
+        bleManagerEmitter.removeAllListeners('BleManagerDisconnectPeripheral');
         return BleManager.connect(deviceId)
             .then( () => BleManager.retrieveServices(deviceId) )
             .then( (peripheralInfo) => {
                 console.log(peripheralInfo);
                 return dispatch(connected(deviceId))
             } )
+            .then( () => {
+                console.log("Adding listener")
+                bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', handleDeviceStateChange(dispatch) );
+            })
             .catch( (e) => dispatch(connectionFailed() ));
     }
 }
 
+export function disconnect(deviceId) {
+    return function (dispatch) {
+        console.log("Disconnecting from " + deviceId)
+        return BleManager.disconnect(deviceId)
+            .then( () => {
+                console.log("Disconnected from " + deviceId)
+                bleManagerEmitter.removeAllListeners('BleManagerDisconnectPeripheral');
+                dispatch(disconnected(deviceId))
+            })
+            .catch( (e) => console.warn(e) );
+    }
 
+}
 
 export function scan() {
     return (dispatch) => {
         bleManagerEmitter.removeAllListeners('BleManagerDiscoverPeripheral');
         bleManagerEmitter.removeAllListeners('BleManagerStopScan');
+        bleManagerEmitter.removeAllListeners('BleManagerDisconnectPeripheral');
 
         bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral(dispatch) );
         bleManagerEmitter.addListener('BleManagerStopScan', handleScanFinished(dispatch) );
+
+        /*
+        BleManager.getConnectedPeripherals([])
+            .then((peripheralsArray) => {
+                // Success code
+                console.log('Connected peripherals: ' + peripheralsArray.length);
+            });
+        */
+
         BleManager.scan([], 3, true)
             .then( (results) => {
                 console.log('Scanning...');
@@ -234,6 +278,7 @@ export default function reducer(state = InitialState, action) {
         case _CONNECTED:
             return state.setIn(['connectingTo'], '').setIn(['connectedTo'], action.id);
         case _CONNECTION_FAILED:
+        case _DISCONNECTED:
             return state.setIn(['connectingTo'], '').setIn(['connectedTo'], '');
         case _LED_ON:
         case _LED_OFF:
