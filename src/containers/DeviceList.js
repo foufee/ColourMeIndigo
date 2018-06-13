@@ -26,7 +26,6 @@ const mapStateToProps = (state, ownprops) => {
             return value.set('bars', calcSignalLevel(value.get('rssi'),4))
         })
     }
-    console.log("Wow",props.devices.toJS());
     return props;
 };
 
@@ -34,22 +33,13 @@ const mapDispatchToProps = (dispatch) => {
     return {
         componentDidMount: () => {
             dispatch(ble.checkPermissions())
-                .then( ()=> {
-                    console.log("Permissions ok")
-                })
-                .catch( (e) => {
-                    console.log("No BLE");
-                })
+                .then( ()=> dispatch(ble.detectAlreadyConnectedDevices()))
+                .catch( (e) => console.log("No BLE") )
         },
         onConnect: (deviceId) => {
             dispatch(ble.connectToDevice(deviceId))
-                .then( () => {
-                    console.log('Yay');
-                })
-                .catch( (e) => {
-                    console.log("Oh well")
-                });
-            console.log("boo")
+                .then( () => console.log('Yay') )
+                .catch( (e) => console.log("Oh well") );
         }
     };
 };

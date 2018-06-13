@@ -145,6 +145,27 @@ function handleDeviceStateChange(dispatch, state)
 }
 /*************** BLE Management Functions ********************/
 
+export function detectAlreadyConnectedDevices() {
+    BleManager.getConnectedPeripherals([CMI_SERVICE_UUID])
+        .then((peripheralsArray) => {
+            // Success code
+            console.log('Connected peripherals: ' + peripheralsArray.length);
+            console.log(peripheralsArray)
+
+            BleManager.readRSSI(peripheralsArray[0].id)
+                .then((rssi) => {
+                    // Success code
+                    console.log('Current RSSI: ' + rssi);
+                })
+                .catch((error) => {
+                    // Failure code
+                    console.log(error);
+                });
+
+        });
+
+}
+
 export function connectToDevice(deviceId) {
     return function (dispatch) {
         dispatch(connecting(deviceId));
