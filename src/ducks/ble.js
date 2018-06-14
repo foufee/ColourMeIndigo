@@ -37,8 +37,6 @@ uint8_t colorMeIndigoCalibYellowUUID[]         = {0x0a,0x7e,0x26,0x09,0xcb,0xa4,
 uint8_t colorMeIndigoCalibOrangeUUID[]         = {0x0a,0x7e,0x26,0x0A,0xcb,0xa4,0x43,0x28,0xb7,0x23,0x72,0xd4,0x24,0x0c,0x17,0x05}; // R/W
 uint8_t colorMeIndigoCalibRedUUID[]            = {0x0a,0x7e,0x26,0x0B,0xcb,0xa4,0x43,0x28,0xb7,0x23,0x72,0xd4,0x24,0x0c,0x17,0x05}; // R/W
  */
-const CMI_SERVICE_UUID   = '0a7e2600-cba4-4328-b723-72d4240c1705'
-const CMI_LED_STATE_UUID = '0a7e2601-cba4-4328-b723-72d4240c1705'
 
 const CMI_UUIDS = {
     service:'0a7e2600-cba4-4328-b723-72d4240c1705',
@@ -122,7 +120,7 @@ function disconnected() {
 }
 
 
-function handleDiscoverPeripheral(dispatch, peripheral)
+function handleDiscoverPeripheral(dispatch, forceConnected = false)
 {
     return (peripheral) =>
     {
@@ -130,39 +128,60 @@ function handleDiscoverPeripheral(dispatch, peripheral)
             console.log("Peripheral discovered:")
             console.log(peripheral);
             dispatch(peripheralDiscovered(peripheral));
+            if (forceConnected) {
+                bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', handleDeviceStateChange(dispatch) );
+                bleManagerEmitter.addListener('BleManagerDidUpdateValueForCharacteristic', handleCharacteristicNotified(dispatch) );
+                dispatch(connected(peripheral.id))
+                BleManager.readRSSI(peripheral.id)
+                    .then( (rssi) => {
+                        console.log("RSSI:",peripheral.id,rssi)
+                    })
+            }
         }
     }
 }
 
+function handleCharacteristicNotified(dispatch)
+{
+    return (d) => {
+        var buf = new ArrayBuffer(4);
+        var view = new DataView(buf);
+
+        d.value.forEach(function (b, i) {
+            console.log(i,b)
+            view.setUint8(3-i, b);
+        });
+
+// Read the bits as a float; note that by doing this, we're implicitly
+// converting it from a 32-bit float into JavaScript's native 64-bit double
+        let num = view.getFloat32(0);
+// Done
+        console.log("Char Notified", num,d.peripheral,d.characteristic,d.service)
+    }
+}
+
+
 function handleDeviceStateChange(dispatch, state)
 {
-    console.log("here",state)
     return (state) =>
     {
-
         console.log(state);
     }
 }
 /*************** BLE Management Functions ********************/
 
 export function detectAlreadyConnectedDevices() {
-    BleManager.getConnectedPeripherals([CMI_SERVICE_UUID])
-        .then((peripheralsArray) => {
-            // Success code
-            console.log('Connected peripherals: ' + peripheralsArray.length);
-            console.log(peripheralsArray)
-
-            BleManager.readRSSI(peripheralsArray[0].id)
-                .then((rssi) => {
-                    // Success code
-                    console.log('Current RSSI: ' + rssi);
+    return function (dispatch) {
+        BleManager.getConnectedPeripherals([CMI_UUIDS.service])
+            .then((peripheralsArray) => {
+                peripheralsArray.forEach((v) => {
+                    console.log("Scanning already connected devices")
+                    return BleManager.connect(v.id)
+                        .then( () => BleManager.retrieveServices(v.id))
+                        .then( (pInfo) => handleDiscoverPeripheral(dispatch, true)(pInfo))
                 })
-                .catch((error) => {
-                    // Failure code
-                    console.log(error);
-                });
-
-        });
+            });
+    }
 
 }
 
@@ -179,6 +198,7 @@ export function connectToDevice(deviceId) {
             .then( () => {
                 console.log("Adding listener")
                 bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', handleDeviceStateChange(dispatch) );
+                bleManagerEmitter.addListener('BleManagerDidUpdateValueForCharacteristic', handleCharacteristicNotified(dispatch) );
             })
             .catch( (e) => dispatch(connectionFailed() ));
     }
@@ -191,6 +211,7 @@ export function disconnect(deviceId) {
             .then( () => {
                 console.log("Disconnected from " + deviceId)
                 bleManagerEmitter.removeAllListeners('BleManagerDisconnectPeripheral');
+                bleManagerEmitter.removeAllListeners('BleManagerDidUpdateValueForCharacteristic');
                 dispatch(disconnected(deviceId))
             })
             .catch( (e) => console.warn(e) );
@@ -207,17 +228,8 @@ export function scan() {
         bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral(dispatch) );
         bleManagerEmitter.addListener('BleManagerStopScan', handleScanFinished(dispatch) );
 
-        /*
-        BleManager.getConnectedPeripherals([])
-            .then((peripheralsArray) => {
-                // Success code
-                console.log('Connected peripherals: ' + peripheralsArray.length);
-            });
-        */
-
         BleManager.scan([], 3, true)
             .then( (results) => {
-                console.log('Scanning...');
                 dispatch(scanning());
             })
     }
@@ -261,11 +273,14 @@ function sampleChannel(color,v) {
 export function illuminateLED(ledState) {
     return (dispatch,getState) => {
         console.log("Illuminating")
-        return BleManager.write(getState().getIn(['ble','connectedTo']), CMI_SERVICE_UUID, CMI_LED_STATE_UUID, ledState ? [1] : [0] , 1)
+        return BleManager.write(getState().getIn(['ble','connectedTo']), CMI_UUIDS.service, CMI_UUIDS.LED, ledState ? [1] : [0] , 1)
             .then( () => dispatch(ledState ? ledOn() : ledOff()) )
             .then( () => {
                 let state = getState();
-
+                if (ledState) {
+                    BleManager.startNotification(getState().getIn(['ble','connectedTo']), CMI_UUIDS.service, CMI_UUIDS.blue)
+                        .then( () => console.log("Notifications enabled"))
+                }
                 console.log("Can now take readings")
             })
             .catch( (e) => { console.warn(e) })

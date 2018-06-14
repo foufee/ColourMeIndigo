@@ -1,5 +1,5 @@
 import {List} from 'immutable'
-
+import _ from 'underscore'
 import {connectWithLifecycle} from "react-lifecycle-component";
 import DeviceListComponent from '../components/DeviceList'
 
@@ -10,6 +10,14 @@ const mapStateToProps = (state, ownprops) => {
     var MAX_RSSI = -55;
 
     let calcSignalLevel = (rssi, bars) => {
+        console.log("RSSI in CSL",rssi)
+        if (_.isUndefined(rssi)) {
+            console.log("Odd")
+            return 1;
+        } else{
+            console.log(rssi)
+        }
+
         if (rssi < MIN_RSSI) {
             return 0;
         } else if (rssi >= MAX_RSSI) {
