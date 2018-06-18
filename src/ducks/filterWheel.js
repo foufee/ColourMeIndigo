@@ -4,7 +4,7 @@ import {Map,List} from 'immutable'
 const _SELECT_COLOR = 'filterwheel/SELECT_COLOR';
 
 export const InitialState = new Map( {
-    selectedColor:0,
+    selectedColor:'red',
 })
 
 export function selectColor(color) {

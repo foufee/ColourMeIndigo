@@ -10,16 +10,10 @@ const mapStateToProps = (state, ownprops) => {
     var MAX_RSSI = -55;
 
     let calcSignalLevel = (rssi, bars) => {
-        console.log("RSSI in CSL",rssi)
-        if (_.isUndefined(rssi)) {
-            console.log("Odd")
-            return 1;
-        } else{
-            console.log(rssi)
-        }
+        if (_.isUndefined(rssi)) return 1;
 
         if (rssi < MIN_RSSI) {
-            return 0;
+            return 1;
         } else if (rssi >= MAX_RSSI) {
             return bars - 1;
         } else {
@@ -41,7 +35,8 @@ const mapDispatchToProps = (dispatch) => {
     return {
         componentDidMount: () => {
             dispatch(ble.checkPermissions())
-                .then( ()=> dispatch(ble.detectAlreadyConnectedDevices()))
+                .then( () => dispatch(ble.scan("ColourMeIndigo")))
+                .then( ()=> dispatch(ble.detectAlreadyConnectedDevices("ColourMeIndigo")))
                 .catch( (e) => console.log("No BLE") )
         },
         onConnect: (deviceId) => {

@@ -1,7 +1,7 @@
 import React,{Component} from 'react';
 import {Image,View,Easing,TouchableOpacity,TouchableWithoutFeedback,Text , PanResponder, Animated, Dimensions} from 'react-native'
 
-const COLORS = ['RED','ALL','VIOLET','BLUE','GREEN','YELLOW','ORANGE']
+const COLORS = ['red','all','violet','blue','green','yellow','orange']
 const numberOfColors = COLORS.length
 const angle = 360.0/numberOfColors
 const TOP_LEFT = 'tl';
@@ -150,7 +150,7 @@ class FilterWheel extends Component {
         })
         return (
             <View  style={{flex: 1, flexDirection: 'row', justifyContent: 'center', }} >
-                <Animated.Image ref={component => { this.imageComponent = component ; }} onLayout={this.measureView} source={require('../../public/filterWheel_debug.png')}
+                <Animated.Image ref={component => { this.imageComponent = component ; }} onLayout={this.measureView} source={require('../../public/filterWheel.png')}
                               style={{transform: [{rotate: spin}]}} {...this._panResponder.panHandlers}/>
             </View>
         )

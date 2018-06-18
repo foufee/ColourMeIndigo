@@ -1,8 +1,8 @@
 import React from 'react';
 import DeviceList from '../containers/DeviceList'
-import { Content,Card,CardItem,Header, Left, Right, Body, Title, Container,Button,Dimensions } from 'native-base'
+import { Content,Card,CardItem,Header, Left, Right, Body, Title, Container,Button } from 'native-base'
 import { Col, Row, Grid} from 'react-native-easy-grid'
-import { ImageBackground, View , Slider, Switch} from 'react-native'
+import { ImageBackground, View , Text, Slider, Switch,Dimensions,StyleSheet} from 'react-native'
 import FilterWheel from '../widgets/filterWheel'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 import {
@@ -18,6 +18,7 @@ const ReadingScreen = (props) => {
         navigation,
         onToggleIlluminate,
         illuminated,
+        data,
         selectedColor,
         onSelectColor
     } = props;
@@ -41,7 +42,7 @@ const ReadingScreen = (props) => {
                 <Right>
                     <Button
                         transparent
-                        onPress={ () => { onToggleIlluminate(!illuminated) }} >
+                        onPress={ () => { onToggleIlluminate(!illuminated, selectedColor) }} >
                         <Icon name={ illuminated ? 'lightbulb-on-outline' : 'lightbulb-outline'} size={30} style={ {color:illuminated ? 'white' : 'black'}} />
                     </Button>
                 </Right>
@@ -56,23 +57,16 @@ const ReadingScreen = (props) => {
                             data={{
                                 labels: ['January', 'February', 'March', 'April', 'May', 'June'],
                                 datasets: [{
-                                    data: [
-                                        Math.random() * 100,
-                                        Math.random() * 100,
-                                        Math.random() * 100,
-                                        Math.random() * 100,
-                                        Math.random() * 100,
-                                        Math.random() * 100
-                                    ]
+                                    data: data
                                 }]
                             }}
-                            width={500} // from react-native
+                            width={Dimensions.get('window').width}
                             height={220}
                             chartConfig={{
-                                backgroundColor: '#e26a00',
-                                backgroundGradientFrom: '#fb8c00',
-                                backgroundGradientTo: '#ffa726',
-                                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                                backgroundColor: '#c5bae2',
+                                backgroundGradientFrom: '#ba72fb',
+                                backgroundGradientTo: '#ffcdd3',
+                                color: (opacity = 1) => `rgba(0, 0, 0,1)`,
                                 style: {
                                     borderRadius: 16
                                 }
@@ -84,10 +78,24 @@ const ReadingScreen = (props) => {
                             }}
                         />
                     </Row>
+                    <Row>
+                        <Text style={styles.titleText}
+                        >{Math.round(data[data.length - 1] * 100) / 100}µW/cm2</Text>
+                    </Row>
                 </Grid>
             </Content>
         </Container>
     );
 }
+
+const styles = StyleSheet.create({
+    baseText: {
+        fontFamily: 'Cochin',
+    },
+    titleText: {
+        fontSize: 40,
+        fontWeight: 'bold',
+    },
+});
 
 export default ReadingScreen;
