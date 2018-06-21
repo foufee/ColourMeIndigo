@@ -23,6 +23,14 @@ const ReadingScreen = (props) => {
         onSelectColor
     } = props;
 
+    let sample = 'No sample';
+    let steps = ['','']
+    if (data.length != 0) {
+        sample = (Math.round(data[data.length - 1] * 100) / 100) + "µW/cm2"
+        let maxSamples = data.length
+        steps = Array.from(new Array(maxSamples), (x,i) => maxSamples - i)
+    }
+
 
     return (
         <Container>
@@ -50,12 +58,12 @@ const ReadingScreen = (props) => {
             <Content >
                 <Grid>
                     <Row>
-                        <FilterWheel selectedColor={selectedColor} onPickColor={ (c) => onSelectColor(c)}/>
+                        <FilterWheel selectedColor={selectedColor} onPickColor={ (c) => onSelectColor(c,illuminated)}/>
                     </Row>
                     <Row style={{marginTop:-150, backgroundColor:'white'}}>
                         <LineChart
                             data={{
-                                labels: ['January', 'February', 'March', 'April', 'May', 'June'],
+                                labels: steps,
                                 datasets: [{
                                     data: data
                                 }]
@@ -78,9 +86,9 @@ const ReadingScreen = (props) => {
                             }}
                         />
                     </Row>
-                    <Row>
-                        <Text style={styles.titleText}
-                        >{Math.round(data[data.length - 1] * 100) / 100}µW/cm2</Text>
+                    <Row style={{flex:1,justifyContent:'center',alignItems:'center'}}>
+
+                        <Text style={styles.titleText}>{sample}</Text>
                     </Row>
                 </Grid>
             </Content>

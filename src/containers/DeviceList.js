@@ -23,9 +23,12 @@ const mapStateToProps = (state, ownprops) => {
         }
     }
 
+    let connectedAddress = state.getIn(['ble','connectedTo'])
+
     var props = {
         devices: state.getIn(['ble','devices'], new Map()).map( (value,key) => {
             return value.set('bars', calcSignalLevel(value.get('rssi'),4))
+                .set("connected",value.get('id')==connectedAddress)
         })
     }
     return props;
@@ -41,6 +44,11 @@ const mapDispatchToProps = (dispatch) => {
         },
         onConnect: (deviceId) => {
             dispatch(ble.connectToDevice(deviceId))
+                .then( () => console.log('Yay') )
+                .catch( (e) => console.log("Oh well") );
+        },
+        onDisconnect: (deviceId) => {
+            dispatch(ble.disconnect(deviceId))
                 .then( () => console.log('Yay') )
                 .catch( (e) => console.log("Oh well") );
         }

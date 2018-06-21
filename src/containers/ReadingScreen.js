@@ -8,10 +8,6 @@ import * as spectrometer from '../ducks/Spectrometer'
 const mapStateToProps = (state, ownprops) => {
     let selectedChannel = state.getIn(['filterWheel','selectedColor']);
     let data = state.getIn(['spectrometer','data',selectedChannel], new List([Math.random(),Math.random(),Math.random(),Math.random(),Math.random()])).toJS();
-    if (data.length < 3) {
-        data = [1,1]
-    }
-    console.log(data)
     var props = {
         selectedColor: selectedChannel,
         illuminated: state.getIn(['spectrometer','illuminated'], false),
@@ -25,13 +21,14 @@ const mapDispatchToProps = (dispatch) => {
     return {
         componentDidMount: () => {
         },
-        onSelectColor: (c) => {
+        onSelectColor: (c,ledState) => {
+            if (ledState) dispatch(spectrometer.stopSampling())
             dispatch(filterWheelActions.selectColor(c))
+            if (ledState) dispatch(spectrometer.startSampling(selectedColor))
         },
         onToggleIlluminate: (state,selectedColor) => {
             dispatch(spectrometer.illuminateLED(state))
                 .then( (ledState) => {
-                    console.log("Here");
                     if (ledState) {
                         dispatch(spectrometer.startSampling(selectedColor))
                             .then( () => console.log("Notifications enabled"))
