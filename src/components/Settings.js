@@ -1,48 +1,24 @@
 import React from 'react';
 import DeviceList from '../containers/DeviceList'
-import { Content,Card,CardItem,Header, Left, Right, Body, Title, Container,Button,Text,Picker } from 'native-base'
+import { ContentHead, Content, Left, Right, Body, Title, Container,Button,Text,Picker } from 'native-base'
 import { Col, Row, Grid} from 'react-native-easy-grid'
 import { ImageBackground, View , Slider, Switch} from 'react-native'
-import FilterWheel from '../widgets/filterWheel'
+import Header from '../containers/Header'
+
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 
 const SettingScreen = (props) => {
     const {
         navigation,
-        illuminated,
         onSelectColor,
-        onIlluminate
-
     } = props;
 
 
     return (
         <Container>
-            <Header>
-                <Left>
-                    <Button
-                        transparent
-                        onPress={() => {
-                            navigation.openDrawer();
-                        }}>
-                        <Icon name="menu" size={30}/>
-                    </Button>
-                </Left>
-                <Body>
-                <Title>Settings</Title>
-                </Body>
-                <Right>
-                    <Button
-                        transparent
-                        onPress={() => { onIlluminate() }} >
-                        <Icon name="flashlight" size={30} style={ {color:illuminated ? 'white' : 'black'}}/>
-                    </Button>
-
-                </Right>
-            </Header>
+            <Header navigation={navigation} pageTitle={"Settings"} showIlluminator={false}/>
             <Content >
                 <Grid>
-
                     <Row>
                         <Text style={{flex:1}}>Hello</Text>
                     </Row>

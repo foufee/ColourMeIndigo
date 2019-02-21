@@ -1,5 +1,5 @@
 import React from "react";
-import { AppRegistry, Image, StatusBar } from "react-native";
+import { AppRegistry, Image, ScrollView,SafeAreaView,StyleSheet} from "react-native";
 import { Container, Content, Text, List, ListItem } from "native-base";
 
 const SideBar = (props) => {
@@ -21,20 +21,27 @@ const SideBar = (props) => {
         </List>
     }
 
+    console.log(routes)
+    console.log(navigation.getScreenProps("Home"))
+
     return (
-        <Container>
-            <Content>
-                <Image
-                    source={{
-                        uri: "https://github.com/GeekyAnts/NativeBase-KitchenSink/raw/react-navigation/img/drawer-cover.png"
-                    }}
-                    style={{
-                        height: 120,
-                        alignSelf: "stretch",
-                        justifyContent: "center",
-                        alignItems: "center"
-                    }}>
-                </Image>
+        <ScrollView style={{flex:1, flexDirection:'column'}}>
+            <Image
+                source={require('../../public/drawer_bg.jpeg')}
+                style={{
+                    width:undefined,
+                    height: 60,
+                    alignItems: "center",
+                }}>
+            </Image>
+            <Text style={{
+                color:'white',
+                marginTop:-30,
+                height:20
+            }}>
+            ColourMeIndigio
+            </Text>
+            <SafeAreaView style={styles.container} forceInset={{ top: 'always', horizontal: 'never' }}>
                 <List
                     dataArray={routes}
                     renderRow={data => {
@@ -49,9 +56,18 @@ const SideBar = (props) => {
                 />
                 {disconnectItem}
 
-            </Content>
-        </Container>
+
+            </SafeAreaView>
+        </ScrollView>
+
+
 )   ;
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+});
 
 export default SideBar;

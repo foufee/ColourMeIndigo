@@ -1,31 +1,24 @@
-import {List} from 'immutable'
+import _ from 'underscore'
 
 import {connectWithLifecycle} from "react-lifecycle-component";
-import ReadingScreenComponent from '../components/ReadingScreen'
-import * as filterWheelActions from "../ducks/filterWheel";
+import HeaderComponent from '../components/Header'
 import * as ble from '../ducks/ble'
 import * as spectrometer from '../ducks/Spectrometer'
 
 const mapStateToProps = (state, ownprops) => {
-    let selectedChannel = state.getIn(['filterWheel','selectedColor']);
-    let data = state.getIn(['spectrometer','data',selectedChannel], new List()).toJS();
     var props = {
-        selectedColor: selectedChannel,
+        navigation: ownprops.navigation,
+        pageTitle: ownprops.pageTitle,
+        showIlluminator: _.isUndefined(ownprops.showIlluminator) ? true : ownprops.showIlluminator ,
+        selectedColor: state.getIn(['filterWheel','selectedColor']),
         illuminated: state.getIn(['spectrometer','illuminated'], false),
-        data: data
     }
-
     return props;
 };
 
 const mapDispatchToProps = (dispatch) => {
     return {
         componentDidMount: () => {
-        },
-        onSelectColor: (c,ledState) => {
-            if (ledState) dispatch(spectrometer.stopSampling())
-            dispatch(filterWheelActions.selectColor(c))
-            if (ledState) dispatch(spectrometer.startSampling(selectedColor))
         },
         onToggleIlluminate: (state,selectedColor) => {
             dispatch(spectrometer.illuminateLED(state))
@@ -35,15 +28,14 @@ const mapDispatchToProps = (dispatch) => {
                             .then( () => console.log("Notifications enabled"))
                     }  else {
                         dispatch(spectrometer.stopSampling());
-                        console.log("Notifications disabled")
                     }})
         }
     };
 };
 
-export const ReadingScreen = connectWithLifecycle(
+export const Header = connectWithLifecycle(
     mapStateToProps,
     mapDispatchToProps
-)(ReadingScreenComponent );
+)(HeaderComponent );
 
-export default ReadingScreen;
+export default Header;

@@ -16,7 +16,7 @@ import { StyleProvider,
 } from 'native-base';
 
 
-import { createDrawerNavigator } from 'react-navigation';
+import { createDrawerNavigator,createAppContainer } from 'react-navigation';
 
 import { Provider } from 'react-redux'
 import configureStore from './src/ducks/configureStore'
@@ -30,7 +30,7 @@ import SettingsScreen from "./src/containers/Settings";
 
 const RootStack = createDrawerNavigator(
     {
-        Home: {screen: HomeScreen},
+        Home: {screen: HomeScreen, },
         Reading: {screen: ReadingScreen},
         Settings: {screen: SettingsScreen},
     },
@@ -39,10 +39,20 @@ const RootStack = createDrawerNavigator(
     }
 );
 
+
+const AppContainer = createAppContainer(RootStack);
+;
+
 export default class App extends React.Component {
     render() {
-            return (<Provider store={store}>
-                <RootStack />
-            </Provider>)
+            return (
+
+                    <Provider store={store}>
+                        <AppContainer>
+                            <RootStack />
+                        </AppContainer>
+                    </Provider>
+                )
+
     }
 }
